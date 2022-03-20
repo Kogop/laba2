@@ -98,6 +98,12 @@ int main()
 {
 	MPI_Init(NULL, NULL);
 
+	int rank, size;
+	MPI_Status status;
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+
 	FillMatrix(A, B);
 	FillVector(v);
 
@@ -108,6 +114,10 @@ int main()
 	Matrix_Peremnoj_na_vector(A, v);
 
 	Zapix_otvetov_v_File();
+
+
+
+
 
 	MPI_Finalize();
 }
