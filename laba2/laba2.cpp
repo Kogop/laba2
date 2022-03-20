@@ -46,13 +46,7 @@ void Matrix_Peremnoj_na_vector(double A1[n][m], double v1[n]) {
 	}
 }
 
-int main(int argc, char* argv[])
-{
-	MPI_Init(&argc, &argv);
-
-	FillMatrix(A, B);
-	FillVector(v);
-
+void Zapis_v_File() {
 	ofstream File1("Matrix_1.txt");
 	for (int i = 0; i < n; i++)
 	{
@@ -73,8 +67,15 @@ int main(int argc, char* argv[])
 	}
 	File2.close();
 
-	Matrix_Peremnoj();
+	ofstream File4("Vector_1.txt");
+	for (int i = 0; i < n; i++)
+	{
+		File4 << v[i] << endl;
+	}
+	File4.close();
+}
 
+void Zapix_otvetov_v_File() {
 	ofstream File3("Matrix_Otvet.txt");
 	for (int i = 0; i < n; i++)
 	{
@@ -85,20 +86,28 @@ int main(int argc, char* argv[])
 	}
 	File3.close();
 
-	ofstream File4("Vector_1.txt");
-	for (int i = 0; i < n; i++)
-	{
-		File4 << v[i] << endl;
-	}
-	File4.close();
-
-	Matrix_Peremnoj_na_vector(A, v);
 	ofstream File5("Vector_Otvet.txt");
 	for (int i = 0; i < n; i++)
 	{
 		File5 << d[i] << endl;
 	}
 	File5.close();
+}
+
+int main()
+{
+	MPI_Init(NULL, NULL);
+
+	FillMatrix(A, B);
+	FillVector(v);
+
+	Zapis_v_File();
+
+	Matrix_Peremnoj();
+
+	Matrix_Peremnoj_na_vector(A, v);
+
+	Zapix_otvetov_v_File();
 
 	MPI_Finalize();
 }
