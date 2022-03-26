@@ -149,65 +149,78 @@ int main()
 
 	int rank, size;
 	MPI_Status status;
+	MPI_Request request;
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+	int tag1 = 1, tag2 = 2, tag3 = 3;
+	int isDone = 0;
+
+
+	while (isDone < 4) {
 
 
 
+		if (rank == 0) {
+
+			FillMatrix(A, B);
+			FillVector(v);
+			Zapis_v_File();
+			read_Vector();
+			read_Matrix();
+
+
+			MPI_Isend(A1, 1, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
+			MPI_Isend(B1, 1, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
+
+			MPI_Isend(v1, 1, MPI_DOUBLE, 2, tag2, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
+			MPI_Isend(A1, 1, MPI_DOUBLE, 2, tag2, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
+			isDone++;
+
+		}
+		else if (rank == 1)
+		{
+			MPI_Irecv(&A1, 1, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
+			MPI_Irecv(&B1, 1, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
 
 
 
+			Matrix_Peremnoj(A1, B1);
+			MPI_Isend(C, 1, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD, &request);
+			isDone++;
+		}
+		else if (rank == 2)
+		{
+			MPI_Irecv(&v1, 1, MPI_DOUBLE, 2, tag2, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
+			MPI_Irecv(&A1, 1, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
 
+			Matrix_Peremnoj_na_vector(A1, v1);
 
+			MPI_Isend(d, 1, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
+			isDone++;
+		}
+		else if (rank == 3)
+		{
 
+			MPI_Irecv(&C, 1, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
+			MPI_Irecv(&d, 1, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD, &request);
+			MPI_Wait(&request, &status);
 
-
-
-	if (rank==0) {
-
-		FillMatrix(A, B);
-		FillVector(v);
-		Zapis_v_File();
-		read_Vector();
-		read_Matrix();
-
-
-		MPI_Send(A1, 1, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD);
-		MPI_Send(B1, 1, MPI_DOUBLE, 1, tag, MPI_COMM_WORLD);
-
-
-		MPI_Send(v1, 1, MPI_DOUBLE, 3, tag, MPI_COMM_WORLD);
-
-
+			Zapix_otvetov_v_File();
+			isDone++;
+		}
 
 	}
-	else if (rank == 1)
-	{
-		MPI_Recv(&A1, 1, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
-		MPI_Recv(&B1, 1, MPI_DOUBLE, 1, tag, MPI_COMM_WORLD, &status);
-
-		Matrix_Peremnoj(A1, B1);
-		MPI_Send(C, 1, MPI_DOUBLE, 2, tag, MPI_COMM_WORLD);
-	}
-	else if (rank == 2)
-	{
-		MPI_Recv(&v1, 1, MPI_DOUBLE, 3, tag, MPI_COMM_WORLD, &status);
-		MPI_Recv(&A1, 1, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
-
-		Matrix_Peremnoj_na_vector(A1, v1);
-
-		MPI_Send(d, 1, MPI_DOUBLE, 4, tag, MPI_COMM_WORLD);
-	}
-	else if (rank == 3)
-	{
-		MPI_Recv(&C, 1, MPI_DOUBLE, 2, tag, MPI_COMM_WORLD, &status);
-		MPI_Recv(&d, 1, MPI_DOUBLE, 4, tag, MPI_COMM_WORLD, &status);
-
-		Zapix_otvetov_v_File();
-	}
-
-
 
 	MPI_Finalize();
 }
