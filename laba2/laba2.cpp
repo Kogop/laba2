@@ -11,20 +11,20 @@ void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < m; j++) {
-			AA[i][j] = rand() % 100 /2.7 ;
+			AA[i][j] = rand() % 100;
 		}
 	}
 
 	for (int i = 0; i < m; i++)
 	{
 		for (int j = 0; j < n; j++) {
-			BB[i][j] = rand() % 100 / 2.6 ;
+			BB[i][j] = rand() % 100;
 		}
 	}
 }
 void FillVector(double v1[n]) {
 	for (int j = 0; j < n; j++) {
-		v1[j] = rand() % 100 / 2.5;
+		v1[j] = rand() % 100;
 	}
 }
 
@@ -76,18 +76,26 @@ void Zapis_v_File() {
 	File4.close();
 }
 
-void Zapix_otvetov_v_File() {
-	ofstream File3("Matrix_Otvet.txt");
+void Zapix_otvetov_v_File(double(&CC)[n][n]) {
+	ofstream File3("Matrix_Otvet1.txt");
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++) {
-			File3 << C[i][j] << " ";
+			File3 << CC[i][j] << " ";
 		}
-		File3 << endl;
+		File3 << "\n";
 	}
 	File3.close();
+	cout << " c zapisannaya --";
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++) {
+			cout << CC[i][j] << " ";
+		}
+		cout << endl;
+	}
 
-	ofstream File5("Vector_Otvet.txt");
+	ofstream File5("Vector_Otvet1.txt");
 	for (int i = 0; i < n; i++)
 	{
 		File5 << d[i] << endl;
@@ -120,7 +128,7 @@ void read_Matrix() {
 	for (int i = 0; i < m; i++)
 	{
 		for (int j = 0; j < n; j++) {
-			File1 >> B1[i][j];
+			File2 >> B1[i][j];
 			//cout << AA[i][j] << " ";
 		}
 		// cout << endl;
@@ -148,8 +156,9 @@ int main()
 		read_Vector();
 		read_Matrix();
 
-		MPI_Send(A1, 1, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD);
-		MPI_Send(B1, 1, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD);
+		MPI_Send(A1, n*m, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD);
+
+		MPI_Send(B1, m*n, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD);
 
 		MPI_Send(v1, 1, MPI_DOUBLE, 2, tag2, MPI_COMM_WORLD);
 		MPI_Send(A1, 1, MPI_DOUBLE, 2, tag2, MPI_COMM_WORLD);
@@ -158,33 +167,49 @@ int main()
 		cout << rank << "th rank is done it's work flawlessly" << endl;
 	}
 	else if (rank == 1) {
-		MPI_Recv(&A1, 1, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
-		MPI_Recv(&B1, 1, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
+		MPI_Recv(&(A1[0][0]), n*m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
+
+		MPI_Recv(&(B1[0][0]), m*n, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
 
 		Matrix_Peremnoj(A1, B1);
-		MPI_Send(C, 1, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
+		MPI_Send(C, n*n, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
 		//isDone++;
 		cout << rank << "st rank is done it's work flawlessly" << endl;
 	}
 	else if (rank == 2)
 	{
-		MPI_Recv(&v1, 1, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
-		MPI_Recv(&A1, 1, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
+		MPI_Recv(&(v1[0]), n, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
+		MPI_Recv(&(A1[0][0]), n*m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
 
 		Matrix_Peremnoj_na_vector(A1, v1);
 
-		MPI_Send(d, 1, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
+		MPI_Send(d, n, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
 		//isDone++;
 		cout << rank << "nd rank is done it's work flawlessly" << endl;
 	}
 	else if (rank == 3)
 	{
-		MPI_Recv(&C, 1, MPI_DOUBLE, 1, tag3, MPI_COMM_WORLD, &status);
-		MPI_Recv(&d, 1, MPI_DOUBLE, 2, tag3, MPI_COMM_WORLD, &status);
+		MPI_Recv(&(C[0][0]), n*n, MPI_DOUBLE, 1, tag3, MPI_COMM_WORLD, &status);
+		MPI_Recv(&(d[0]), n, MPI_DOUBLE, 2, tag3, MPI_COMM_WORLD, &status);
+		cout << " c poluchennaya --";
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < m; j++) {
+				cout << C[i][j] << " ";
+			}
+			cout << endl;
+		}
 
-		Zapix_otvetov_v_File();
+		Zapix_otvetov_v_File(C);
 		//isDone++;
 		cout << rank << "rd rank is done it's work flawlessly" << endl;
+	}
+	else if(rank!=0)
+	{
+		for (int rank = 0; rank < 3; rank++)
+		{
+
+		}
 	}
 	//cout << isDone << endl;
 
