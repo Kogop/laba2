@@ -11,20 +11,20 @@ void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < m; j++) {
-			AA[i][j] = rand() % 100;
+			AA[i][j] = rand() % 100 / 2.4;
 		}
 	}
 
 	for (int i = 0; i < m; i++)
 	{
 		for (int j = 0; j < n; j++) {
-			BB[i][j] = rand() % 100;
+			BB[i][j] = rand() % 100 / 2.4;
 		}
 	}
 }
 void FillVector(double v1[n]) {
 	for (int j = 0; j < n; j++) {
-		v1[j] = rand() % 100;
+		v1[j] = rand() % 100 /2.4;
 	}
 }
 
@@ -48,7 +48,7 @@ void Matrix_Peremnoj_na_vector(double(&AA)[n][m], double(&vv)[n]) {
 }
 
 void Zapis_v_File() {
-	ofstream File1("Matrix_1.txt");
+	ofstream File1("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Matrix_1.txt");
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < m; j++) {
@@ -58,7 +58,7 @@ void Zapis_v_File() {
 	}
 	File1.close();
 
-	ofstream File2("Matrix_2.txt");
+	ofstream File2("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Matrix_2.txt");
 	for (int i = 0; i < m; i++)
 	{
 		for (int j = 0; j < n; j++) {
@@ -68,7 +68,7 @@ void Zapis_v_File() {
 	}
 	File2.close();
 
-	ofstream File4("Vector_1.txt");
+	ofstream File4("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Vector_1.txt");
 	for (int i = 0; i < n; i++)
 	{
 		File4 << v[i] << endl;
@@ -77,7 +77,7 @@ void Zapis_v_File() {
 }
 
 void Zapix_otvetov_v_File(double(&CC)[n][n]) {
-	ofstream File3("Matrix_Otvet1.txt");
+	ofstream File3("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Matrix_Otvet1.txt");
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++) {
@@ -86,7 +86,7 @@ void Zapix_otvetov_v_File(double(&CC)[n][n]) {
 		File3 << "\n";
 	}
 	File3.close();
-	cout << " c zapisannaya --";
+	cout << " c zapisannaya --" << endl;
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < m; j++) {
@@ -95,7 +95,7 @@ void Zapix_otvetov_v_File(double(&CC)[n][n]) {
 		cout << endl;
 	}
 
-	ofstream File5("Vector_Otvet1.txt");
+	ofstream File5("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Vector_Otvet1.txt");
 	for (int i = 0; i < n; i++)
 	{
 		File5 << d[i] << endl;
@@ -104,7 +104,7 @@ void Zapix_otvetov_v_File(double(&CC)[n][n]) {
 }
 
 void read_Vector() {
-	ifstream File5("Vector_Otvet.txt");
+	ifstream File5("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Vector_1.txt");
 	for (int i = 0; i < n; i++) {
 		File5 >> v1[i];
 		//  cout << DD[i]<<endl;
@@ -113,7 +113,7 @@ void read_Vector() {
 }
 
 void read_Matrix() {
-	ifstream File1("Matrix_1.txt");
+	ifstream File1("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Matrix_1.txt");
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < m; j++) {
@@ -124,7 +124,7 @@ void read_Matrix() {
 	}
 	File1.close();
 
-	ifstream File2("Matrix_2.txt");
+	ifstream File2("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Matrix_2.txt");
 	for (int i = 0; i < m; i++)
 	{
 		for (int j = 0; j < n; j++) {
@@ -191,14 +191,14 @@ int main()
 	{
 		MPI_Recv(&(C[0][0]), n*n, MPI_DOUBLE, 1, tag3, MPI_COMM_WORLD, &status);
 		MPI_Recv(&(d[0]), n, MPI_DOUBLE, 2, tag3, MPI_COMM_WORLD, &status);
-		cout << " c poluchennaya --";
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < m; j++) {
-				cout << C[i][j] << " ";
-			}
-			cout << endl;
-		}
+		//cout << " c poluchennaya --" << endl;
+		//for (int i = 0; i < n; i++)
+		//{
+		//	for (int j = 0; j < m; j++) {
+		//		cout << C[i][j] << " ";
+		//	}
+		//	cout << endl;
+		//}
 
 		Zapix_otvetov_v_File(C);
 		//isDone++;
