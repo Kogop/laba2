@@ -4,7 +4,7 @@
 using namespace std;
 
 const int root = 0, tag = 0;
-const int n = 15, m = 10;
+const int n = 3, m = 3;
 double A[n][m], B[m][n], v[n], d[n], C[n][n], A1[n][m], B1[m][n], v1[n];
 
 void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
@@ -191,26 +191,39 @@ int main()
 	{
 		MPI_Recv(&(C[0][0]), n*n, MPI_DOUBLE, 1, tag3, MPI_COMM_WORLD, &status);
 		MPI_Recv(&(d[0]), n, MPI_DOUBLE, 2, tag3, MPI_COMM_WORLD, &status);
-		//cout << " c poluchennaya --" << endl;
-		//for (int i = 0; i < n; i++)
-		//{
-		//	for (int j = 0; j < m; j++) {
-		//		cout << C[i][j] << " ";
-		//	}
-		//	cout << endl;
-		//}
 
 		Zapix_otvetov_v_File(C);
 		//isDone++;
 		cout << rank << "rd rank is done it's work flawlessly" << endl;
 	}
-	else if(rank!=0)
-	{
-		for (int rank = 0; rank < 3; rank++)
-		{
+	// todo rasparelelit umnojenie matrix. 
+	//else if(rank!=0)
+	//{
+	//	for (int rank = 0; rank < length; rank++)
+	//	{
 
-		}
-	}
+	//	}
+
+	//	MPI_Recv(&(A1[0][0]), n * m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
+
+	//	MPI_Recv(&(B1[0][0]), m * n, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
+
+	//	Matrix_Peremnoj(A1, B1);
+	//	MPI_Send(C, n * n, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
+
+
+	//	MPI_Recv(&(v1[0]), n, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
+	//	MPI_Recv(&(A1[0][0]), n * m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
+
+	//	Matrix_Peremnoj_na_vector(A1, v1);
+
+	//	MPI_Send(d, n, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
+	//
+	//	MPI_Recv(&(C[0][0]), n * n, MPI_DOUBLE, 1, tag3, MPI_COMM_WORLD, &status);
+	//	MPI_Recv(&(d[0]), n, MPI_DOUBLE, 2, tag3, MPI_COMM_WORLD, &status);
+
+	//	Zapix_otvetov_v_File(C);
+	//}
 	//cout << isDone << endl;
 
 	MPI_Finalize();
