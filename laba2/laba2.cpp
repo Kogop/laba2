@@ -3,8 +3,12 @@
 #include <fstream>
 using namespace std;
 
+
+const int root = 0, tag = 0;
 const int n = 15, m = 10;
-double A[n][m], B[m][n], v[n], d[n], C[n][n];
+double A[n][m], B[m][n], v[n], d[n], C[n][n], A1[n][m], B1[m][n], v1[n];
+
+
 
 void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
 	for (int i = 0; i < n; i++)
@@ -27,21 +31,21 @@ void FillVector(double v1[n]) {
 	}
 }
 
-void Matrix_Peremnoj() {
+void Matrix_Peremnoj(double(&AA)[n][m], double(&BB)[m][n]) {
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
 			C[i][j] = 0;
 			for (int k = 0; k < m; k++) {
-				C[i][j] += A[i][k] * B[k][j];
+				C[i][j] += AA[i][k] * BB[k][j];
 			}
 		}
 	}
 }
-void Matrix_Peremnoj_na_vector(double A1[n][m], double v1[n]) {
+void Matrix_Peremnoj_na_vector(double (&AA)[n][m], double (&vv)[n]) {
 	for (int i = 0; i < n; i++) {
 		d[i] = 0;
 		for (int j = 0; j < m; j++) {
-			d[i] += v1[i] * A1[i][j];
+			d[i] += vv[i] * AA[i][j];
 		}
 	}
 }
@@ -94,6 +98,51 @@ void Zapix_otvetov_v_File() {
 	File5.close();
 }
 
+void read_Vector() {
+
+
+	ifstream File5("Vector_Otvet.txt");
+	for (int i = 0; i < n; i++) {
+
+		File5 >> v1[i];
+		//  cout << DD[i]<<endl;
+	}
+	File5.close();
+}
+
+void read_Matrix() {
+
+
+	ifstream File1("Matrix_1.txt");
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++) {
+
+			File1 >> A1[i][j];
+			//cout << AA[i][j] << " ";
+		}
+		// cout << endl;
+	}
+	File1.close();
+
+
+	ifstream File2("Matrix_2.txt");
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < n; j++) {
+
+			File1 >> B1[i][j];
+			//cout << AA[i][j] << " ";
+		}
+		// cout << endl;
+	}
+	File2.close();
+
+}
+
+
+
+
 int main()
 {
 	MPI_Init(NULL, NULL);
@@ -104,18 +153,59 @@ int main()
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 
-	FillMatrix(A, B);
-	FillVector(v);
-
-	Zapis_v_File();
-
-	Matrix_Peremnoj();
-
-	Matrix_Peremnoj_na_vector(A, v);
-
-	Zapix_otvetov_v_File();
 
 
+
+
+
+
+
+
+
+
+
+	if (rank==0) {
+
+		FillMatrix(A, B);
+		FillVector(v);
+		Zapis_v_File();
+		read_Vector();
+		read_Matrix();
+
+
+		MPI_Send(A1, 1, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD);
+		MPI_Send(B1, 1, MPI_DOUBLE, 1, tag, MPI_COMM_WORLD);
+
+
+		MPI_Send(v1, 1, MPI_DOUBLE, 3, tag, MPI_COMM_WORLD);
+
+
+
+	}
+	else if (rank == 1)
+	{
+		MPI_Recv(&A1, 1, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
+		MPI_Recv(&B1, 1, MPI_DOUBLE, 1, tag, MPI_COMM_WORLD, &status);
+
+		Matrix_Peremnoj(A1, B1);
+		MPI_Send(C, 1, MPI_DOUBLE, 2, tag, MPI_COMM_WORLD);
+	}
+	else if (rank == 2)
+	{
+		MPI_Recv(&v1, 1, MPI_DOUBLE, 3, tag, MPI_COMM_WORLD, &status);
+		MPI_Recv(&A1, 1, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD, &status);
+
+		Matrix_Peremnoj_na_vector(A1, v1);
+
+		MPI_Send(d, 1, MPI_DOUBLE, 4, tag, MPI_COMM_WORLD);
+	}
+	else if (rank == 3)
+	{
+		MPI_Recv(&C, 1, MPI_DOUBLE, 2, tag, MPI_COMM_WORLD, &status);
+		MPI_Recv(&d, 1, MPI_DOUBLE, 4, tag, MPI_COMM_WORLD, &status);
+
+		Zapix_otvetov_v_File();
+	}
 
 
 
