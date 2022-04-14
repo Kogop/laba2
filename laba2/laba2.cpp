@@ -4,27 +4,27 @@
 using namespace std;
 
 const int root = 0, tag = 0;
-const int n = 3, m = 3;
+const int n = 30, m = 40;
 double A[n][m], B[m][n], v[n], d[n], C[n][n], A1[n][m], B1[m][n], v1[n];
 
 void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < m; j++) {
-			AA[i][j] = rand() % 100 / 2.4;
+			AA[i][j] = 1/*rand() % 100 / 2.4*/;
 		}
 	}
 
 	for (int i = 0; i < m; i++)
 	{
 		for (int j = 0; j < n; j++) {
-			BB[i][j] = rand() % 100 / 2.4;
+			BB[i][j] = 1/*rand() % 100 / 2.4*/;
 		}
 	}
 }
 void FillVector(double v1[n]) {
 	for (int j = 0; j < n; j++) {
-		v1[j] = rand() % 100 /2.4;
+		v1[j] = 1/*rand() % 100 / 2.4*/;
 	}
 }
 
@@ -89,7 +89,7 @@ void Zapix_otvetov_v_File(double(&CC)[n][n]) {
 	cout << " c zapisannaya --" << endl;
 	for (int i = 0; i < n; i++)
 	{
-		for (int j = 0; j < m; j++) {
+		for (int j = 0; j < n; j++) {
 			cout << CC[i][j] << " ";
 		}
 		cout << endl;
@@ -136,18 +136,54 @@ void read_Matrix() {
 	File2.close();
 }
 
-int main()
-{
+double k[m];
+double l[m];
+
+void vzat_vector_iz_matrix(double(&AA)[n][m], int s1, double(&BB)[m][n], int s2/*, int c*/) {
+	// if c == 1 znachit berem stroku if c== 2 znachit berem stolbec
+	// s eto nomer stroki ili stolbca kotoriy nuzhno vzat
+   // if(c==1){
+	for (int j = 0; j < m; j++) {
+		k[j] = AA[s1][j];
+		//cout << k[j] << endl;
+	}
+	//  }else if(c==2){
+
+	for (int j = 0; j < m; j++) {
+		l[j] = BB[j][s2];
+		//cout << l[j] << endl;
+	}
+	//}
+}
+
+double peremnoj_vector_na_vector(double(&kk)[m], double(&ll)[m]) {
+	double h = 0;
+	for (int i = 0; i < m; i++) {
+		h += kk[i] * ll[i];
+	}
+	return h;
+}
+
+double Temp[] = { 0,0,0 };
+
+int main() {
 	MPI_Init(NULL, NULL);
 
-	int rank, size;
+	int rank, size, limit, end;
+	end = 0;
+
 	MPI_Status status;
 	//MPI_Request request;
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	int tag1 = 1, tag2 = 2, tag3 = 3;
+	int tag1 = 1, tag2 = 2, tag3 = 0;
 	int isDone = 0;
+
+	if (n < size) {
+		limit = n + 1;
+	}
+	else { limit = size; }
 
 	if (rank == 0) {
 		FillMatrix(A, B);
@@ -155,76 +191,57 @@ int main()
 		Zapis_v_File();
 		read_Vector();
 		read_Matrix();
+		for (int i = 0; i < limit - 1; i++) {
+			for (int j = 0; j < n; j++) {
 
-		MPI_Send(A1, n*m, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD);
+				vzat_vector_iz_matrix(A1, i, B1, j/*,1*/);
+				//tag1 = i;
+				MPI_Send(k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
+				// vzat_vector_iz_matrix(B1,j/*,2*/);
+				 //tag2 = j;
+				MPI_Send(l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
+				cout << "rannk = " << rank << "i = " << i << " j = " << j << endl;
+				fflush(stdout);
+			}
+		}
 
-		MPI_Send(B1, m*n, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD);
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				// tag3 = j;
+				MPI_Recv(&(Temp[0]), 3, MPI_DOUBLE, j + 1, tag3, MPI_COMM_WORLD, &status);
+				int h = Temp[1] - 1;
+				int g = Temp[2];
+				C[h][g] = Temp[0];
+				cout << "rank = " << j + 1 << " C = " << C[h][g] << endl;
+			}
+		}
+		//MPI_Barrier(MPI_COMM_WORLD);
+		Zapix_otvetov_v_File(C/*,d*/);
 
-		MPI_Send(v1, 1, MPI_DOUBLE, 2, tag2, MPI_COMM_WORLD);
-		MPI_Send(A1, 1, MPI_DOUBLE, 2, tag2, MPI_COMM_WORLD);
-
-		//isDone++;
-		cout << rank << "th rank is done it's work flawlessly" << endl;
 	}
-	else if (rank == 1) {
-		MPI_Recv(&(A1[0][0]), n*m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
+	else if (rank < limit) {
+		//for (int i = 0; i < n; i++){
+		for (int j = 0; j < limit - 1; j++) {
+			//tag3 = 0;
+			MPI_Recv(&(k[0]), m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
+			MPI_Recv(&(l[0]), m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
+			cout << "rank = " << rank << " j = " << j << endl;
+			//Matrix_Peremnoj(A1, B1);
+		   // C[i][j] = peremnoj_vector_na_vector(k,l);
+			Temp[0] = peremnoj_vector_na_vector(k, l);
+			Temp[1] = rank;
+			Temp[2] = j;
+			MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
+		}
 
-		MPI_Recv(&(B1[0][0]), m*n, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
-
-		Matrix_Peremnoj(A1, B1);
-		MPI_Send(C, n*n, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
-		//isDone++;
-		cout << rank << "st rank is done it's work flawlessly" << endl;
+		// }
+		cout << rank << " all counting is done. Writing the answers" << endl;
 	}
-	else if (rank == 2)
-	{
-		MPI_Recv(&(v1[0]), n, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
-		MPI_Recv(&(A1[0][0]), n*m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
-
-		Matrix_Peremnoj_na_vector(A1, v1);
-
-		MPI_Send(d, n, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
-		//isDone++;
-		cout << rank << "nd rank is done it's work flawlessly" << endl;
-	}
-	else if (rank == 3)
-	{
-		MPI_Recv(&(C[0][0]), n*n, MPI_DOUBLE, 1, tag3, MPI_COMM_WORLD, &status);
-		MPI_Recv(&(d[0]), n, MPI_DOUBLE, 2, tag3, MPI_COMM_WORLD, &status);
-
-		Zapix_otvetov_v_File(C);
-		//isDone++;
-		cout << rank << "rd rank is done it's work flawlessly" << endl;
-	}
-	// todo rasparelelit umnojenie matrix. 
-	//else if(rank!=0)
-	//{
-	//	for (int rank = 0; rank < length; rank++)
-	//	{
-
-	//	}
-
-	//	MPI_Recv(&(A1[0][0]), n * m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
-
-	//	MPI_Recv(&(B1[0][0]), m * n, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
-
-	//	Matrix_Peremnoj(A1, B1);
-	//	MPI_Send(C, n * n, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
-
-
-	//	MPI_Recv(&(v1[0]), n, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
-	//	MPI_Recv(&(A1[0][0]), n * m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
-
-	//	Matrix_Peremnoj_na_vector(A1, v1);
-
-	//	MPI_Send(d, n, MPI_DOUBLE, 3, tag3, MPI_COMM_WORLD);
-	//
-	//	MPI_Recv(&(C[0][0]), n * n, MPI_DOUBLE, 1, tag3, MPI_COMM_WORLD, &status);
-	//	MPI_Recv(&(d[0]), n, MPI_DOUBLE, 2, tag3, MPI_COMM_WORLD, &status);
-
-	//	Zapix_otvetov_v_File(C);
-	//}
-	//cout << isDone << endl;
+	//   MPI_Barrier(MPI_COMM_WORLD);
+	 // if(rank == 1){
+	  // MPI_Send(C, n*n, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
+	  // }
+   // uznavat' v kakom range zapisalsya element i iz nego uze poluchat vse
 
 	MPI_Finalize();
 }
