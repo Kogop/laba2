@@ -191,20 +191,28 @@ int main() {
 		Zapis_v_File();
 		read_Vector();
 		read_Matrix();
-		for (int i = 0; i < limit - 1; i++) {
-			for (int j = 0; j < n; j++) {
 
-				vzat_vector_iz_matrix(A1, i, B1, j/*,1*/);
-				//tag1 = i;
-				MPI_Send(k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
-				// vzat_vector_iz_matrix(B1,j/*,2*/);
-				 //tag2 = j;
-				MPI_Send(l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
-				cout << "rannk = " << rank << "i = " << i << " j = " << j << endl;
-				fflush(stdout);
+		for (int end = 0; end < limit - 1; end += size)  // 4et  poka viglyadit nepravilno
+		{
+
+			cout  << "some part of all ranks" << " started with " << end << endl;
+			for (int i = 0; i < limit -1; i++) 
+			{
+				for (int j = 0; j < limit -1; j++) 
+				{
+					int ii = end + i;
+					int jj = end + j;
+					vzat_vector_iz_matrix(A1, ii, B1, j/*,1*/);
+					//tag1 = i;
+					MPI_Send(k, m, MPI_DOUBLE, jj + 1, tag1, MPI_COMM_WORLD);
+					// vzat_vector_iz_matrix(B1,j/*,2*/);
+					 //tag2 = j;
+					MPI_Send(l, m, MPI_DOUBLE, jj + 1, tag2, MPI_COMM_WORLD);
+					cout << "Otpr 1 rannk = " << rank << " i = " << i << " j = " << j << endl;
+					fflush(stdout);
+				}
 			}
 		}
-
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
 				// tag3 = j;
@@ -212,29 +220,32 @@ int main() {
 				int h = Temp[1] - 1;
 				int g = Temp[2];
 				C[h][g] = Temp[0];
-				cout << "rank = " << j + 1 << " C = " << C[h][g] << endl;
+				cout << "Priem 2 rank = " << j + 1 << " C = " << C[h][g] << endl;
 			}
 		}
 		//MPI_Barrier(MPI_COMM_WORLD);
 		Zapix_otvetov_v_File(C/*,d*/);
 
 	}
-	else if (rank < limit) {
-		//for (int i = 0; i < n; i++){
-		for (int j = 0; j < limit - 1; j++) {
-			//tag3 = 0;
-			MPI_Recv(&(k[0]), m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
-			MPI_Recv(&(l[0]), m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
-			cout << "rank = " << rank << " j = " << j << endl;
-			//Matrix_Peremnoj(A1, B1);
-		   // C[i][j] = peremnoj_vector_na_vector(k,l);
-			Temp[0] = peremnoj_vector_na_vector(k, l);
-			Temp[1] = rank;
-			Temp[2] = j;
-			MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
-		}
+	else if (rank > 0 && rank < limit) {
+		
+		for (int end = 0; end < limit - 1; end += size)  // 4et  poka viglyadit nepravilno
+		{
 
-		// }
+			for (int j = 0; j < limit - 1; j++) {
+				//tag3 = 0;
+				MPI_Recv(&(k[0]), m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
+				MPI_Recv(&(l[0]), m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
+				cout << "Priem 1 rank = " << rank << " j = " << j << endl;
+				//Matrix_Peremnoj(A1, B1);
+			   // C[i][j] = peremnoj_vector_na_vector(k,l);
+				Temp[0] = peremnoj_vector_na_vector(k, l);
+				Temp[1] = rank;
+				Temp[2] = j;
+				MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
+			}
+		}
+		
 		cout << rank << " all counting is done. Writing the answers" << endl;
 	}
 	//   MPI_Barrier(MPI_COMM_WORLD);
@@ -244,4 +255,5 @@ int main() {
    // uznavat' v kakom range zapisalsya element i iz nego uze poluchat vse
 
 	MPI_Finalize();
+	return 1;
 }
