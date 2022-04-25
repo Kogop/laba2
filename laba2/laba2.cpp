@@ -216,7 +216,7 @@ int main() {
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
 				// tag3 = j;
-				MPI_Recv(&(Temp[0]), 3, MPI_DOUBLE, j + 1, tag3, MPI_COMM_WORLD, &status);
+				MPI_Recv(&(Temp[0]), 3, MPI_DOUBLE, MPI_ANY_SOURCE, tag3, MPI_COMM_WORLD, &status);
 				int h = Temp[1] - 1;
 				int g = Temp[2];
 				C[h][g] = Temp[0];
