@@ -169,7 +169,7 @@ double Temp[] = { 0,0,0 };
 int main() {
 	MPI_Init(NULL, NULL);
 
-	int rank, size, limit, end;
+	int rank, size, limit, end, end_1_otprav = 0, end_1_priem = 0;
 	end = 0;
 
 	MPI_Status status;
@@ -192,24 +192,25 @@ int main() {
 		read_Vector();
 		read_Matrix();
 
-		for (int end = 0; end < limit - 1; end += size)  // 4et  poka viglyadit nepravilno
+		for (int end = 0; end < n * n; end += end_1_otprav)  // 4et  poka viglyadit nepravilno
 		{
-
-			cout  << "some part of all ranks" << " started with " << end << endl;
-			for (int i = 0; i < limit -1; i++) 
+			end_1_otprav = 0;
+			cout << "some part of all ranks" << " started with " << end << endl;
+			for (int i = 0; i < limit - 1; i++)
 			{
-				for (int j = 0; j < limit -1; j++) 
+				for (int j = 0; j < limit - 1; j++)
 				{
 					int ii = end + i;
 					int jj = end + j;
 					vzat_vector_iz_matrix(A1, ii, B1, jj/*,1*/);
 					//tag1 = i;
-					MPI_Send(k, m, MPI_DOUBLE, jj + 1, tag1, MPI_COMM_WORLD);
+					MPI_Send(k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
 					// vzat_vector_iz_matrix(B1,j/*,2*/);
 					 //tag2 = j;
-					MPI_Send(l, m, MPI_DOUBLE, jj + 1, tag2, MPI_COMM_WORLD);
+					MPI_Send(l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
 					cout << "Otpr 1 rannk = " << rank << " i = " << i << " j = " << j << endl;
 					fflush(stdout);
+					end_1_otprav++;
 				}
 			}
 		}
@@ -223,15 +224,16 @@ int main() {
 				cout << "Priem 2 rank = " << j + 1 << " C = " << C[h][g] << endl;
 			}
 		}
+		
 		//MPI_Barrier(MPI_COMM_WORLD);
 		Zapix_otvetov_v_File(C/*,d*/);
 
 	}
 	else if (rank < limit) {
 		
-		for (int end = 0; end < limit - 1; end += size)  // 4et  poka viglyadit nepravilno
+		for (int end = 0; end < n*n; end += end_1_priem)  // 4et  poka viglyadit nepravilno
 		{
-
+			end_1_priem = 0;
 			for (int j = 0; j < limit - 1; j++) {
 				//tag3 = 0;
 				MPI_Recv(&(k[0]), m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
@@ -243,6 +245,7 @@ int main() {
 				Temp[1] = rank;
 				Temp[2] = j;
 				MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
+				end_1_priem++;
 			}
 		}
 		
