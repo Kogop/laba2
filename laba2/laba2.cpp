@@ -6,7 +6,7 @@
 using namespace std;
 
 const int root = 0, tag = 0;
-const int n = 3, m = 4;
+const int n = 100, m = 150;
 double A[n][m], B[m][n], v[n], d[n], C[n][n], A1[n][m], B1[m][n], v1[n];
 
 void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
@@ -20,7 +20,7 @@ void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
 	for (int i = 0; i < m; i++)
 	{
 		for (int j = 0; j < n; j++) {
-			BB[i][j] =rand() % 100 / 2.4;
+			BB[i][j] = rand() % 100 / 2.4;
 		}
 	}
 }
@@ -182,6 +182,7 @@ int main() {
 
 	int tag1 = 1, tag2 = 2, tag3 = 0;
 	int isDone = 0, ii = 0, jj = 0;
+	int Stolb_blokov_otprv = 0;
 	int polnih_blokov_otpr = 0;
 	if (n < size) {
 		limit = n + 1;  // if kolichestvo processov bolwe razmera matrix
@@ -195,35 +196,32 @@ int main() {
 		read_Vector();
 		read_Matrix();
 
-		for (int end = 0; end < (n * m); end += end_1_otprav)  // 4et  poka viglyadit nepravilno
+		for (int end = 0; end < (n * n); end += end_1_otprav)  // 4et  poka viglyadit nepravilno
 		{
 			end_1_otprav = 0;
 			cout << "some part of all ranks" << " started with " << end << endl;
 			for (int i = 0; i < limit - 1; i++)
 			{
-				if (ii<=n)
+				if (ii <= n)
 				{
 					for (int j = 0; j < limit - 1; j++)
 					{
-						if ((jj / (limit - 1)) <= m) {
+						if ((((limit - 1) * Stolb_blokov_otprv) + j) <= m) {
+							jj = (((limit - 1) * Stolb_blokov_otprv) + j);
 							//cout << "Otpr " << ii << " stroku, " << jj << " stolbec " << endl;
-							vzat_vector_iz_matrix(A1, ii, B1, jj/*,1*/);
-							//tag1 = i;
+							vzat_vector_iz_matrix(A1, ii, B1, (((limit - 1) * Stolb_blokov_otprv) + j)/*,1*/);
+
 							MPI_Send(k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
-							// vzat_vector_iz_matrix(B1,j/*,2*/);
-							 //tag2 = j;
+
 							MPI_Send(l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
 							//cout << "Otpr 1 rannk = " << rank << " " << ii << " stroku, " << jj << " stolbec " << endl;
 
 							Mesto[0] = ii;
 							Mesto[1] = jj;
-							//cout << " otrpavlau " << ii << " stroku" << jj << " stolbec na " << j + 1 << " proccess" << endl;
+							//cout << " otrpavlau " << ii << " stroku " << jj << " stolbec na " << j + 1 << " proccess" << endl;
 							MPI_Send(&Mesto, 2, MPI_INT, j + 1, 5, MPI_COMM_WORLD);
 							fflush(stdout);
 							end_1_otprav++;
-							//stolb_otprav++;
-
-							jj++;
 						}
 					}
 					ii++;
@@ -233,16 +231,14 @@ int main() {
 					end_1_otprav == (n * m);
 				}
 			}
-			if ((jj/(limit-1)) == m)
+			Stolb_blokov_otprv++;
+			if ((jj / (limit - 1)) == m)
 			{
 				//ii += limit - 1;
 				jj = 0;
 				polnih_blokov_otpr++;
+				Stolb_blokov_otprv = 0;
 			}
-			//else if(ii/(limit-1) == n){
-			//	//jj += limit - 1;
-			//	ii += limit - 1;
-			//}
 			else
 			{
 				ii = polnih_blokov_otpr * (limit - 1);
@@ -257,13 +253,12 @@ int main() {
 					h = Temp[1];
 					g = Temp[2];
 					C[h][g] = Temp[0];
-					
 				}
 				else
 				{
 					j--;
 				}
-				cout << " gavno rabotai " << Temp[0] << endl;
+				//cout << " gavno rabotai " << Temp[0] << endl;
 				//cout << "Priem 2 rank = " << j + 1 << " C = " << C[h][g] << endl;
 			}
 		}
@@ -271,34 +266,28 @@ int main() {
 		Zapix_otvetov_v_File(C/*,d*/);
 	}
 	else if (rank < limit) {
-		for (int end = 0; end < (n * m); end += end_1_priem)  // 4et  poka viglyadit nepravilno
-		{
-			end_1_priem = 0;
-			for (int j = 0; j < limit - 1; j++) {
+		//for (int end = 0; end < m; end += end_1_priem)  // 4et  poka viglyadit nepravilno
+		//{
+		//	end_1_priem = 0;
+		//	for (int j = 0; j < limit - 1; j++) {
 				//tag3 = 0;
 				MPI_Recv(&(k[0]), m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
 				MPI_Recv(&(l[0]), m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
 				MPI_Recv(&(Mesto[0]), 2, MPI_INT, 0, 5, MPI_COMM_WORLD, &status);
-				//cout << "Priem 1 rank = " << rank << " j = " << j << endl;
-				//Matrix_Peremnoj(A1, B1);
-			   // C[i][j] = peremnoj_vector_na_vector(k,l);
+
 				//cout << " prinal " << Mesto[0] << " stroku " << Mesto[1] << " stolbec na " << rank << " proccess" << endl;
 				Temp[0] = peremnoj_vector_na_vector(k, l);
 				Temp[1] = Mesto[0];
 				Temp[2] = Mesto[1];
-				cout << Temp[0] << " cam otvet " << Temp[1] << " ego stroka " << Temp[2] << " Ego stolbec" << endl;
+				cout << " cam otvet = " << Temp[0] << "; ego stroka = " << Temp[1] << "; Ego stolbec = " <<Temp[2]<< endl;
 				MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
-				end_1_priem++;
-			}
-		}
+		//		end_1_priem++;
+		//	}
+	//	}
 
 		cout << rank << " all counting is done. Writing the answers" << endl;
 	}
-	// MPI_Barrier(MPI_COMM_WORLD);
-	 // if(rank == 1){
-	  // MPI_Send(C, n*n, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
-	  // }
-   // uznavat' v kakom range zapisalsya element i iz nego uze poluchat vse
+
 	MPI_Finalize();
 	//MPI_Finalize();
 	return 1;
