@@ -5,7 +5,7 @@
 using namespace std;
 
 const int root = 0, tag = 0;
-const int n = 10, m = 10;
+const int n = 3, m = 3;
 double A[n][m], B[m][n], v[n], d[n], C[n][n], A1[n][m], B1[m][n], v1[n];
 
 void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
@@ -193,33 +193,42 @@ int main() {
 		read_Vector();
 		read_Matrix();
 
-		for (int end = 0; end < (n * n); end += pow((limit - 1), 2))  // 4et  poka viglyadit nepravilno
+		for (int end = 0; end < (n * m); end += end_1_otprav)  // 4et  poka viglyadit nepravilno
 		{
 			end_1_otprav = 0;
 			cout << "some part of all ranks" << " started with " << end << endl;
 			for (int i = 0; i < limit - 1; i++)
 			{
-				for (int j = 0; j < limit - 1; j++)
+				if (ii<=n)
 				{
-					cout << "Otpr " << ii << " stroku, " << jj << " stolbec " << endl;
-					vzat_vector_iz_matrix(A1, ii, B1, jj/*,1*/);
-					//tag1 = i;
-					MPI_Send(k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
-					// vzat_vector_iz_matrix(B1,j/*,2*/);
-					 //tag2 = j;
-					MPI_Send(l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
-					//cout << "Otpr 1 rannk = " << rank << " " << ii << " stroku, " << jj << " stolbec " << endl;
+					for (int j = 0; j < limit - 1; j++)
+					{
+						if ((jj / (limit - 1)) <= m) {
+							cout << "Otpr " << ii << " stroku, " << jj << " stolbec " << endl;
+							vzat_vector_iz_matrix(A1, ii, B1, jj/*,1*/);
+							//tag1 = i;
+							MPI_Send(k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
+							// vzat_vector_iz_matrix(B1,j/*,2*/);
+							 //tag2 = j;
+							MPI_Send(l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
+							//cout << "Otpr 1 rannk = " << rank << " " << ii << " stroku, " << jj << " stolbec " << endl;
 
-					Mesto[0] = ii;
-					Mesto[1] = jj;
-					MPI_Send(&Mesto, 2, MPI_INT, j + 1, 5, MPI_COMM_WORLD);
-					fflush(stdout);
-					end_1_otprav++;
-					//stolb_otprav++;
+							Mesto[0] = ii;
+							Mesto[1] = jj;
+							MPI_Send(&Mesto, 2, MPI_INT, j + 1, 5, MPI_COMM_WORLD);
+							fflush(stdout);
+							end_1_otprav++;
+							//stolb_otprav++;
 
-					jj++;
+							jj++;
+						}
+					}
+					ii++;
 				}
-				ii++;
+				else
+				{
+					end_1_otprav == (n * m);
+				}
 			}
 			if ((jj/(limit-1)) == m)
 			{
@@ -250,7 +259,7 @@ int main() {
 		Zapix_otvetov_v_File(C/*,d*/);
 	}
 	else if (rank < limit) {
-		for (int end = 0; end < (n * n); end += pow((limit - 1), 2))  // 4et  poka viglyadit nepravilno
+		for (int end = 0; end < (n * m); end += pow((limit - 1), 2))  // 4et  poka viglyadit nepravilno
 		{
 			end_1_priem = 0;
 			for (int j = 0; j < limit - 1; j++) {
