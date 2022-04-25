@@ -4,7 +4,7 @@
 using namespace std;
 
 const int root = 0, tag = 0;
-const int n = 30, m = 40;
+const int n = 10, m = 10;
 double A[n][m], B[m][n], v[n], d[n], C[n][n], A1[n][m], B1[m][n], v1[n];
 
 void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
@@ -95,12 +95,12 @@ void Zapix_otvetov_v_File(double(&CC)[n][n]) {
 		cout << endl;
 	}
 
-	ofstream File5("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Vector_Otvet1.txt");
-	for (int i = 0; i < n; i++)
-	{
-		File5 << d[i] << endl;
-	}
-	File5.close();
+	//ofstream File5("C:\\Users\\neste\\source\\Repos\\SuperCompModel\\laba2\\laba2\\Vector_Otvet1.txt");
+	//for (int i = 0; i < n; i++)
+	//{
+	//	File5 << d[i] << endl;
+	//}
+	//File5.close();
 }
 
 void read_Vector() {
@@ -181,13 +181,13 @@ int main() {
 	int isDone = 0;
 
 	if (n < size) {
-		limit = n + 1;
+		limit = n + 1;  // if kolichestvo processov bolwe razmera matrix
 	}
-	else { limit = size; }
+	else { limit = size; }  // if kolichestvo processov menwe ili ravno razmeru matrix
 
 	if (rank == 0) {
 		FillMatrix(A, B);
-		FillVector(v);
+		//FillVector(v);
 		Zapis_v_File();
 		read_Vector();
 		read_Matrix();
@@ -202,7 +202,7 @@ int main() {
 				{
 					int ii = end + i;
 					int jj = end + j;
-					vzat_vector_iz_matrix(A1, ii, B1, j/*,1*/);
+					vzat_vector_iz_matrix(A1, ii, B1, jj/*,1*/);
 					//tag1 = i;
 					MPI_Send(k, m, MPI_DOUBLE, jj + 1, tag1, MPI_COMM_WORLD);
 					// vzat_vector_iz_matrix(B1,j/*,2*/);
@@ -227,7 +227,7 @@ int main() {
 		Zapix_otvetov_v_File(C/*,d*/);
 
 	}
-	else if (rank > 0 && rank < limit) {
+	else if (rank < limit) {
 		
 		for (int end = 0; end < limit - 1; end += size)  // 4et  poka viglyadit nepravilno
 		{
