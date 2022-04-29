@@ -6,7 +6,7 @@
 using namespace std;
 
 const int root = 0, tag = 0;
-const int n = 100, m = 150;
+const int n = 10, m = 15;
 double A[n][m], B[m][n], v[n], d[n], C[n][n], A1[n][m], B1[m][n], v1[n];
 
 void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
@@ -24,11 +24,13 @@ void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
 		}
 	}
 }
+/*
 void FillVector(double v1[n]) {
 	for (int j = 0; j < n; j++) {
-		v1[j] = 1/*rand() % 100 / 2.4*/;
+		v1[j] = 1/*rand() % 100 / 2.4;
 	}
 }
+*/
 
 void Matrix_Peremnoj(double(&AA)[n][m], double(&BB)[m][n]) {
 	for (int i = 0; i < n; i++) {
@@ -167,7 +169,10 @@ double peremnoj_vector_na_vector(double(&kk)[m], double(&ll)[m]) {
 
 double Temp[] = { 0,0,0 };
 int Mesto[] = { 0,0 };
-int N = 0, M = 0;
+int N = 0, M = 0, Nn = 0, Mm = 0, limit_1 = 0;
+int kol_strok_v_posled_str_bloke = 0;
+int kol_stolb_v_posled_stolb_bloke = 0;
+bool is_n_menwe_size;
 
 int main() {
 	MPI_Init(NULL, NULL);
@@ -184,36 +189,69 @@ int main() {
 	int isDone = 0, ii = 0, jj = 0;
 	int Stolb_blokov_otprv = 0;
 	int polnih_blokov_otpr = 0;
-	if (n < size) {
-		limit = n + 1;  // if kolichestvo processov bolwe razmera matrix
+	int proshlo_str_blokov = 0;
+	
+	if (n < size)
+	{
+		limit = n + 1;// if kolichestvo processov bolwe razmera matrix
+		N = 1;
+		M = 1;
+		is_n_menwe_size = true;
 	}
-	else { limit = size; N = ceil(n / limit); M = ceil(m / limit); }  // if kolichestvo processov menwe ili ravno razmeru matrix
+	else
+	{
+		limit = size;  // if kolichestvo processov menwe ili ravno razmeru matrix
+	// ceil - okruglenie do bolwogo
+	// floor - okrug do menwego
+		//N = ceil(n / limit-1); // kol. blokov strok
 
+		//K = (n*m) - kol_stolb_v_posled_stolb_bloke    nihuya eto ne tak??// ili tAK?
+		N = ceil((double)n / ((double)limit - 1.0));
+		M = ceil((double)m / ((double)limit - 1.0));
+		//Nn = floor((double)n / ((double)limit - 1));
+		//M = ceil(m / limit-1); //kol. blok stolb
+		//Mm = floor(m / limit - 1);
+		Nn = n - N * (limit - 1);
+		Mm = m - M * (limit - 1);
+		kol_stolb_v_posled_stolb_bloke = M - Mm;
+		kol_strok_v_posled_str_bloke = N - Nn;
+		is_n_menwe_size = false;
+
+	}
 	if (rank == 0) {
+		//cout << kol_stolb_v_posled_stolb_bloke<<endl;
+	   // cout << kol_strok_v_posled_str_bloke<<endl;
+		cout << N << endl;
+		cout << M << endl;
 		FillMatrix(A, B);
 		//FillVector(v);
 		Zapis_v_File();
-		read_Vector();
+		//read_Vector();
 		read_Matrix();
 
-		for (int end = 0; end < (n * n); end += end_1_otprav)  // 4et  poka viglyadit nepravilno
+		for (int end_1 = 0; end_1 < (n * n); end_1 += end_1_otprav)  // 4et  poka viglyadit nepravilno
 		{
 			end_1_otprav = 0;
-			cout << "some part of all ranks" << " started with " << end << endl;
+			cout << "some part of all ranks" << " started with " << end_1 << endl;
+			//cout << " poslednee ii - " << ii << endl;
 			for (int i = 0; i < limit - 1; i++)
 			{
-				if (ii <= n)
+				if ((((limit - 1) * proshlo_str_blokov) + i) < n)
 				{
 					for (int j = 0; j < limit - 1; j++)
 					{
-						if ((((limit - 1) * Stolb_blokov_otprv) + j) <= m) {
+						//cout << i << "ne startuet" << endl;
+						if ((((limit - 1) * Stolb_blokov_otprv) + j) < n)
+						{
+							//cout << j << "ne startuet" << endl;
+							ii = (((limit - 1) * proshlo_str_blokov) + i); // Need to make actual schetchik stroki.
 							jj = (((limit - 1) * Stolb_blokov_otprv) + j);
 							//cout << "Otpr " << ii << " stroku, " << jj << " stolbec " << endl;
-							vzat_vector_iz_matrix(A1, ii, B1, (((limit - 1) * Stolb_blokov_otprv) + j)/*,1*/);
+							vzat_vector_iz_matrix(A1, ii, B1, jj/*,1*/);
 
-							MPI_Send(k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
+							MPI_Send(&k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
 
-							MPI_Send(l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
+							MPI_Send(&l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
 							//cout << "Otpr 1 rannk = " << rank << " " << ii << " stroku, " << jj << " stolbec " << endl;
 
 							Mesto[0] = ii;
@@ -223,25 +261,32 @@ int main() {
 							fflush(stdout);
 							end_1_otprav++;
 						}
+						else
+						{
+							j = n * n;
+						}
 					}
-					ii++;
 				}
 				else
 				{
-					end_1_otprav == (n * m);
+					i = (n * n);
+
 				}
 			}
+	
 			Stolb_blokov_otprv++;
-			if ((jj / (limit - 1)) == m)
+			if (jj + 1 == n)
 			{
 				//ii += limit - 1;
-				jj = 0;
-				polnih_blokov_otpr++;
+				//jj = 0;
+				//polnih_blokov_otpr++;
 				Stolb_blokov_otprv = 0;
+				proshlo_str_blokov++;
 			}
 			else
 			{
-				ii = polnih_blokov_otpr * (limit - 1);
+				ii = proshlo_str_blokov * (limit - 1);
+
 			}
 		}
 		for (int i = 0; i < n; i++) {
@@ -259,36 +304,70 @@ int main() {
 					j--;
 				}
 				//cout << " gavno rabotai " << Temp[0] << endl;
-				//cout << "Priem 2 rank = " << j + 1 << " C = " << C[h][g] << endl;
+				cout << "Priem 2 real stroka = " << h <<" real stolbec "<< g << " C = " << C[h][g] << endl;
+				fflush(stdout);
 			}
 		}
 
 		Zapix_otvetov_v_File(C/*,d*/);
 	}
-	else if (rank < limit) {
+	if ((rank > 0) && (rank <= kol_strok_v_posled_str_bloke)) {
 		//for (int end = 0; end < m; end += end_1_priem)  // 4et  poka viglyadit nepravilno
 		//{
 		//	end_1_priem = 0;
-		//	for (int j = 0; j < limit - 1; j++) {
-				//tag3 = 0;
-				MPI_Recv(&(k[0]), m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
-				MPI_Recv(&(l[0]), m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
-				MPI_Recv(&(Mesto[0]), 2, MPI_INT, 0, 5, MPI_COMM_WORLD, &status);
+		for (int j = 0; j < N*n; j++)
+		{
+			//tag3 = 0;
+			cout << "pppppppppPPPPPPPPPPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA____________APPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPphui_PPPPPPPPPPPPPPPPPPPPPPP" << endl;
+			fflush(stdout);
+			MPI_Recv(&(k[0]), m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
+			MPI_Recv(&(l[0]), m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
+			MPI_Recv(&(Mesto[0]), 2, MPI_INT, 0, 5, MPI_COMM_WORLD, &status);
 
-				//cout << " prinal " << Mesto[0] << " stroku " << Mesto[1] << " stolbec na " << rank << " proccess" << endl;
-				Temp[0] = peremnoj_vector_na_vector(k, l);
-				Temp[1] = Mesto[0];
-				Temp[2] = Mesto[1];
-				cout << " cam otvet = " << Temp[0] << "; ego stroka = " << Temp[1] << "; Ego stolbec = " <<Temp[2]<< endl;
-				MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
-		//		end_1_priem++;
+			//cout << " prinal " << Mesto[0] << " stroku " << Mesto[1] << " stolbec na " << rank << " proccess" << endl;
+			Temp[0] = peremnoj_vector_na_vector(k, l);
+			Temp[1] = Mesto[0];
+			Temp[2] = Mesto[1];
+			//cout << " cam otvet = " << Temp[0] << "; ego stroka = " << Temp[1] << "; Ego stolbec = " <<Temp[2]<< endl;
+			MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
+
+			//		end_1_priem++;
+		}
 		//	}
-	//	}
 
 		cout << rank << " all counting is done. Writing the answers" << endl;
+	}
+	
+	if (is_n_menwe_size)   // nahuya a glavnoe za4em? Ono zhe i beZ etogo rabotaet, da i s nim rabotaet, tak ono je ne nado, za4em ono togda rabotaet??
+	{
+		limit_1 = limit;
+	}
+	else
+	{
+		limit_1 = limit + 1;
+	}
+	if ((rank > kol_strok_v_posled_str_bloke) && (rank < limit_1)) {
+
+		for (int j = 0; j < Nn*n; j++)
+		{
+			//tag3 = 0;
+			MPI_Recv(&(k[0]), m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
+			MPI_Recv(&(l[0]), m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
+			MPI_Recv(&(Mesto[0]), 2, MPI_INT, 0, 5, MPI_COMM_WORLD, &status);
+
+			//cout << " prinal " << Mesto[0] << " stroku " << Mesto[1] << " stolbec na " << rank << " proccess" << endl;
+			Temp[0] = peremnoj_vector_na_vector(k, l);
+			Temp[1] = Mesto[0];
+			Temp[2] = Mesto[1];
+			cout << " cam otvet = " << Temp[0] << "; ego stroka = " << Temp[1] << "; Ego stolbec = " << Temp[2] << endl;
+			fflush(stdout);
+			MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
+			cout << rank << " second of all counting is done. Writing the answers" << endl;
+			//		end_1_priem++;
+		}
 	}
 
 	MPI_Finalize();
 	//MPI_Finalize();
 	return 1;
-}
+};
