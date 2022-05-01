@@ -6,7 +6,7 @@
 using namespace std;
 
 const int root = 0, tag = 0;
-const int n = 10, m = 15;
+const int n = 100, m = 150;
 double A[n][m], B[m][n], v[n], d[n], C[n][n], A1[n][m], B1[m][n], v1[n];
 
 void FillMatrix(double(&AA)[n][m], double(&BB)[m][n]) {
@@ -196,7 +196,8 @@ int main() {
 		limit = n + 1;// if kolichestvo processov bolwe razmera matrix
 		N = 1;
 		M = 1;
-		is_n_menwe_size = true;
+		Nn = 1;
+		//is_n_menwe_size = true;
 	}
 	else
 	{
@@ -206,23 +207,23 @@ int main() {
 		//N = ceil(n / limit-1); // kol. blokov strok
 
 		//K = (n*m) - kol_stolb_v_posled_stolb_bloke    nihuya eto ne tak??// ili tAK?
-		N = ceil((double)n / ((double)limit - 1.0));
-		M = ceil((double)m / ((double)limit - 1.0));
+		N = (n / (limit - 1.0)) + 1;
+		M = (m / (limit - 1.0)) + 1;
 		//Nn = floor((double)n / ((double)limit - 1));
 		//M = ceil(m / limit-1); //kol. blok stolb
 		//Mm = floor(m / limit - 1);
-		Nn = n - N * (limit - 1);
-		Mm = m - M * (limit - 1);
-		kol_stolb_v_posled_stolb_bloke = M - Mm;
-		kol_strok_v_posled_str_bloke = N - Nn;
-		is_n_menwe_size = false;
+		Nn = N - 1;
+		Mm = M - 1;
+		kol_stolb_v_posled_stolb_bloke = m - Mm*(limit-1);
+		kol_strok_v_posled_str_bloke = n - Nn*(limit-1);
+		//is_n_menwe_size = false;
 
 	}
 	if (rank == 0) {
 		//cout << kol_stolb_v_posled_stolb_bloke<<endl;
 	   // cout << kol_strok_v_posled_str_bloke<<endl;
 		cout << N << endl;
-		cout << M << endl;
+		cout << Nn << endl;
 		FillMatrix(A, B);
 		//FillVector(v);
 		Zapis_v_File();
@@ -283,11 +284,11 @@ int main() {
 				Stolb_blokov_otprv = 0;
 				proshlo_str_blokov++;
 			}
-			else
+		/*	else
 			{
 				ii = proshlo_str_blokov * (limit - 1);
 
-			}
+			}*/
 		}
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
@@ -338,15 +339,15 @@ int main() {
 		cout << rank << " all counting is done. Writing the answers" << endl;
 	}
 	
-	if (is_n_menwe_size)   // nahuya a glavnoe za4em? Ono zhe i beZ etogo rabotaet, da i s nim rabotaet, tak ono je ne nado, za4em ono togda rabotaet??
-	{
-		limit_1 = limit;
-	}
-	else
-	{
-		limit_1 = limit + 1;
-	}
-	if ((rank > kol_strok_v_posled_str_bloke) && (rank < limit_1)) {
+	//if (is_n_menwe_size)   // nahuya a glavnoe za4em? Ono zhe i beZ etogo rabotaet, da i s nim rabotaet, tak ono je ne nado, za4em ono togda rabotaet??
+	//{
+	//	limit_1 = limit;
+	//}
+	//else
+	//{
+	//	limit_1 = limit + 1;
+	//}
+	if ((rank > kol_strok_v_posled_str_bloke) && (rank < limit)) {
 
 		for (int j = 0; j < Nn*n; j++)
 		{
