@@ -3,6 +3,7 @@
 #include <fstream>
 //#include <math.h>
 #include <cmath>
+#include <stdlib.h>
 using namespace std;
 
 const int root = 0, tag = 0;
@@ -176,6 +177,8 @@ bool is_n_menwe_size;
 
 int main() {
 	MPI_Init(NULL, NULL);
+	double starttime, endtime;
+	starttime = MPI_Wtime();
 
 	int rank, size, limit, end, end_1_otprav = 0, end_1_priem = 0, h = 0, g = 0;
 	end = 0;
@@ -233,7 +236,7 @@ int main() {
 		for (int end_1 = 0; end_1 < (n * n); end_1 += end_1_otprav)  // 4et  poka viglyadit nepravilno
 		{
 			end_1_otprav = 0;
-			cout << "some part of all ranks" << " started with " << end_1 << endl;
+			//cout << "some part of all ranks" << " started with " << end_1 << endl;
 			//cout << " poslednee ii - " << ii << endl;
 			for (int i = 0; i < limit - 1; i++)
 			{
@@ -250,15 +253,15 @@ int main() {
 							//cout << "Otpr " << ii << " stroku, " << jj << " stolbec " << endl;
 							vzat_vector_iz_matrix(A1, ii, B1, jj/*,1*/);
 
-							MPI_Send(&k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
+							MPI_Ssend(&k, m, MPI_DOUBLE, j + 1, tag1, MPI_COMM_WORLD);
 
-							MPI_Send(&l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
+							MPI_Rsend(&l, m, MPI_DOUBLE, j + 1, tag2, MPI_COMM_WORLD);
 							//cout << "Otpr 1 rannk = " << rank << " " << ii << " stroku, " << jj << " stolbec " << endl;
 
 							Mesto[0] = ii;
 							Mesto[1] = jj;
 							//cout << " otrpavlau " << ii << " stroku " << jj << " stolbec na " << j + 1 << " proccess" << endl;
-							MPI_Send(&Mesto, 2, MPI_INT, j + 1, 5, MPI_COMM_WORLD);
+							MPI_Rsend(&Mesto, 2, MPI_INT, j + 1, 5, MPI_COMM_WORLD);
 							fflush(stdout);
 							end_1_otprav++;
 						}
@@ -305,7 +308,7 @@ int main() {
 					j--;
 				}
 				//cout << " gavno rabotai " << Temp[0] << endl;
-				cout << "Priem 2 real stroka = " << h <<" real stolbec "<< g << " C = " << C[h][g] << endl;
+				//cout << "Priem 2 real stroka = " << h <<" real stolbec "<< g << " C = " << C[h][g] << endl;
 				fflush(stdout);
 			}
 		}
@@ -316,10 +319,11 @@ int main() {
 		//for (int end = 0; end < m; end += end_1_priem)  // 4et  poka viglyadit nepravilno
 		//{
 		//	end_1_priem = 0;
+		MPI_Request request;
 		for (int j = 0; j < N*n; j++)
 		{
 			//tag3 = 0;
-			cout << "pppppppppPPPPPPPPPPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA____________APPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPphui_PPPPPPPPPPPPPPPPPPPPPPP" << endl;
+			//cout << "pppppppppPPPPPPPPPPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA____________APPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPphui_PPPPPPPPPPPPPPPPPPPPPPP" << endl;
 			fflush(stdout);
 			MPI_Recv(&(k[0]), m, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &status);
 			MPI_Recv(&(l[0]), m, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD, &status);
@@ -330,13 +334,14 @@ int main() {
 			Temp[1] = Mesto[0];
 			Temp[2] = Mesto[1];
 			//cout << " cam otvet = " << Temp[0] << "; ego stroka = " << Temp[1] << "; Ego stolbec = " <<Temp[2]<< endl;
-			MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
+			MPI_Isend(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD, &request);
+			MPI_Request_free(&request);
 
 			//		end_1_priem++;
 		}
 		//	}
 
-		cout << rank << " all counting is done. Writing the answers" << endl;
+		//cout << rank << " all counting is done. Writing the answers" << endl;
 	}
 	
 	//if (is_n_menwe_size)   // nahuya a glavnoe za4em? Ono zhe i beZ etogo rabotaet, da i s nim rabotaet, tak ono je ne nado, za4em ono togda rabotaet??
@@ -347,8 +352,10 @@ int main() {
 	//{
 	//	limit_1 = limit + 1;
 	//}
+	
 	if ((rank > kol_strok_v_posled_str_bloke) && (rank < limit)) {
-
+		double buff[1000];
+		MPI_Buffer_attach(&buff, n* m * sizeof(double));
 		for (int j = 0; j < Nn*n; j++)
 		{
 			//tag3 = 0;
@@ -360,14 +367,15 @@ int main() {
 			Temp[0] = peremnoj_vector_na_vector(k, l);
 			Temp[1] = Mesto[0];
 			Temp[2] = Mesto[1];
-			cout << " cam otvet = " << Temp[0] << "; ego stroka = " << Temp[1] << "; Ego stolbec = " << Temp[2] << endl;
+			//cout << " cam otvet = " << Temp[0] << "; ego stroka = " << Temp[1] << "; Ego stolbec = " << Temp[2] << endl;
 			fflush(stdout);
-			MPI_Send(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
-			cout << rank << " second of all counting is done. Writing the answers" << endl;
+			MPI_Bsend(&Temp, 3, MPI_DOUBLE, 0, tag3, MPI_COMM_WORLD);
+			//cout << rank << " second of all counting is done. Writing the answers" << endl;
 			//		end_1_priem++;
 		}
 	}
-
+	endtime = MPI_Wtime();
+	printf("vipolnenie zanyalo %f seconds\n", endtime - starttime);
 	MPI_Finalize();
 	//MPI_Finalize();
 	return 1;
