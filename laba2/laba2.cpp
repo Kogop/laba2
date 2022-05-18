@@ -355,7 +355,7 @@ int main() {
 	
 	if ((rank > kol_strok_v_posled_str_bloke) && (rank < limit)) {
 		double buff[1000];
-		MPI_Buffer_attach(&buff, n* m * sizeof(double));
+		MPI_Buffer_attach(&buff, n* m * sizeof(double));    //rugaetsa na buff tipo ispolzovanie neinitialized memory kekl
 		for (int j = 0; j < Nn*n; j++)
 		{
 			//tag3 = 0;
